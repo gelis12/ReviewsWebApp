@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ReviewsWebApp.Data;
+using ReviewsWebApp.Models;
 
 namespace ReviewsWebApp.Controllers
 {
@@ -34,12 +35,13 @@ namespace ReviewsWebApp.Controllers
 
             var review = await _context.Reviews
                 .FirstOrDefaultAsync(m => m.Id == id);
+            var reviewViewModel = ReviewViewModel.FromEntity(review);
             if (review == null)
             {
                 return NotFound();
             }
 
-            return View(review);
+            return View(reviewViewModel);
         }
 
         // GET: Reviews/Create
@@ -53,16 +55,21 @@ namespace ReviewsWebApp.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Title,Content,Created,Modified,Rating,Subject")] Review review)
+        public async Task<IActionResult> Create(ReviewViewModel reviewViewModel)
         {
             if (ModelState.IsValid)
             {
+                var review = reviewViewModel.ToEntity();
                 review.Id = Guid.NewGuid();
+                
+                review.Created = DateTime.Now;
+                review.Modified = DateTime.Now;
+                
                 _context.Add(review);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            return View(review);
+            return View(reviewViewModel);
         }
 
         // GET: Reviews/Edit/5
@@ -74,11 +81,15 @@ namespace ReviewsWebApp.Controllers
             }
 
             var review = await _context.Reviews.FindAsync(id);
+
             if (review == null)
             {
                 return NotFound();
             }
-            return View(review);
+
+            var reviewViewModel = ReviewViewModel.FromEntity(review);
+
+            return View(reviewViewModel);
         }
 
         // POST: Reviews/Edit/5
@@ -86,9 +97,9 @@ namespace ReviewsWebApp.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, [Bind("Id,Title,Content,Created,Modified,Rating,Subject")] Review review)
+        public async Task<IActionResult> Edit(Guid id, ReviewViewModel reviewViewModel)
         {
-            if (id != review.Id)
+            if (id != reviewViewModel.Id)
             {
                 return NotFound();
             }
@@ -97,12 +108,13 @@ namespace ReviewsWebApp.Controllers
             {
                 try
                 {
+                    var review = reviewViewModel.ToEntity();
                     _context.Update(review);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!ReviewExists(review.Id))
+                    if (!ReviewExists(reviewViewModel.Id))
                     {
                         return NotFound();
                     }
@@ -113,7 +125,7 @@ namespace ReviewsWebApp.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(review);
+            return View(reviewViewModel);
         }
 
         // GET: Reviews/Delete/5
@@ -131,7 +143,9 @@ namespace ReviewsWebApp.Controllers
                 return NotFound();
             }
 
-            return View(review);
+            var reviewViewModel = ReviewViewModel.FromEntity(review);
+
+            return View(reviewViewModel);
         }
 
         // POST: Reviews/Delete/5
