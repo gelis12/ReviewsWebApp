@@ -1,8 +1,25 @@
-﻿@{
+﻿@model IEnumerable<ReviewsWebApp.Data.Review>
+
+@{
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="row rounded-2 hero">
+    <div class="d-flex flex-column justify-content-center align-items-center">
+        <h1 class="display-1 fw-bold text-center text-white hero-title">ReviewsWebApp</h1>
+        <h3 class="text-white">Read and write Reviews.</h3>
+    </div>
 </div>
+
+<h2 class="text-center mb-5">Check Our Reviews</h2>
+
+<p>
+    <a asp-controller="Reviews" asp-action="Create" class="btn btn-primary">Create New</a>
+</p>
+
+@{
+    foreach (var item in Model)
+    {
+        await Html.RenderPartialAsync("_Review", item);
+    }
+}

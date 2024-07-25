@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap');
+
 html {
   font-size: 14px;
 }
@@ -19,4 +21,17 @@ html {
 
 body {
   margin-bottom: 60px;
+}
+
+.hero{
+    font-family: "Archivo Black", sans-serif;
+    height: 500px;
+    margin-bottom: 100px;
+    background-image: linear-gradient(to bottom, rgba(169, 169, 169, 0.1), rgba(0, 0, 0, .9)),url("../images/ss-rating-review-stars.jpg");
+    background-position-x: center;
+    background-position-y: 20%;
+}
+
+.hero-title{
+    text-shadow: #0B5ED7 1px 0 10px;
 }

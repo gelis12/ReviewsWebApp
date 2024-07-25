@@ -1,0 +1,16 @@
+﻿@model ReviewsWebApp.Data.Review
+
+
+<div class="container border border-1 rounded-2 mt-3 p-1">
+    <p class="text-secondary">@Model.Subject</p>
+    <div class="d-flex p-2 align-items-center justify-content-between">
+        <h1>@Model.Title</h1>
+        <p>@string.Join("", Enumerable.Repeat("⭐", Model.Rating))</p>
+    </div>
+    <div class="d-flex flex-column">
+        @Model.Content
+        <div class="d-flex justify-content-end">
+            <a asp-action="Details" asp-controller="Reviews" asp-route-id="@Model.Id" class="btn btn-primary m-1">Read</a>
+        </div>
+    </div>
+</div>

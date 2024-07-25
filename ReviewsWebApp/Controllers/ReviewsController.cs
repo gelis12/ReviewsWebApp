@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ReviewsWebApp.Data;
 using ReviewsWebApp.Models;
@@ -13,19 +10,14 @@ namespace ReviewsWebApp.Controllers
     public class ReviewsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<IdentityUser> _userManager;
 
-        public ReviewsController(ApplicationDbContext context)
+        public ReviewsController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
-        // GET: Reviews
-        public async Task<IActionResult> Index()
-        {
-            return View(await _context.Reviews.ToListAsync());
-        }
-
-        // GET: Reviews/Details/5
         public async Task<IActionResult> Details(Guid? id)
         {
             if (id == null)
@@ -34,8 +26,15 @@ namespace ReviewsWebApp.Controllers
             }
 
             var review = await _context.Reviews
+                .Include(r => r.CreatedBy)
                 .FirstOrDefaultAsync(m => m.Id == id);
+
+            var user = await _userManager.GetUserAsync(User);
+
             var reviewViewModel = ReviewViewModel.FromEntity(review);
+
+            reviewViewModel.HasEditAndDeletePermissions = string.Equals(user?.Id, reviewViewModel.CreatedById);
+
             if (review == null)
             {
                 return NotFound();
@@ -44,35 +43,39 @@ namespace ReviewsWebApp.Controllers
             return View(reviewViewModel);
         }
 
-        // GET: Reviews/Create
+        [Authorize]
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Reviews/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
+        [Authorize]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ReviewViewModel reviewViewModel)
         {
+            
             if (ModelState.IsValid)
             {
+                var user = await _userManager.GetUserAsync(User);
+
+
+
                 var review = reviewViewModel.ToEntity();
                 review.Id = Guid.NewGuid();
                 
                 review.Created = DateTime.Now;
                 review.Modified = DateTime.Now;
-                
+                review.CreatedBy = user;
+
+
                 _context.Add(review);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction("Index","Home");
             }
             return View(reviewViewModel);
         }
 
-        // GET: Reviews/Edit/5
         public async Task<IActionResult> Edit(Guid? id)
         {
             if (id == null)
@@ -92,9 +95,6 @@ namespace ReviewsWebApp.Controllers
             return View(reviewViewModel);
         }
 
-        // POST: Reviews/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(Guid id, ReviewViewModel reviewViewModel)
@@ -109,6 +109,9 @@ namespace ReviewsWebApp.Controllers
                 try
                 {
                     var review = reviewViewModel.ToEntity();
+
+                    review.Modified = DateTime.Now;
+
                     _context.Update(review);
                     await _context.SaveChangesAsync();
                 }
@@ -123,12 +126,11 @@ namespace ReviewsWebApp.Controllers
                         throw;
                     }
                 }
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction("Index", "Home");
             }
             return View(reviewViewModel);
         }
 
-        // GET: Reviews/Delete/5
         public async Task<IActionResult> Delete(Guid? id)
         {
             if (id == null)
@@ -148,7 +150,6 @@ namespace ReviewsWebApp.Controllers
             return View(reviewViewModel);
         }
 
-        // POST: Reviews/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(Guid id)
@@ -160,7 +161,7 @@ namespace ReviewsWebApp.Controllers
             }
 
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction("Index", "Home");
         }
 
         private bool ReviewExists(Guid id)
